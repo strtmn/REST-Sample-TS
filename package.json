@@ -1,8 +1,8 @@
 {
-  "name": "docuware_ts_rest",
+  "name": "docuware-rest-api-playground",
   "version": "1.0.0",
-  "description": "Sample application to call DocuWare REST API with http client 'request'",
-  "main": "index.js",
+  "description": "Rumspielen mit der DocuWare REST API",
+  "main": "dist/index.js",
   "scripts": {
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "start": "node ./dist/index.js",
@@ -12,7 +12,7 @@
   "keywords": [
     "docuware"
   ],
-  "author": "DocuWare GmbH - Dominik Peukert - Team SDK",
+  "author": "Hannes Strautmann (strautmann.dev); DocuWare GmbH - Dominik Peukert - Team SDK",
   "license": "MIT",
   "dependencies": {
     "@types/tar": "^4.0.5",
@@ -37,11 +37,11 @@
     "@types/request": "^2.48.5",
     "@types/request-promise-native": "^1.0.17",
     "@types/tough-cookie": "^4.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.0.0",
-    "@typescript-eslint/parser": "^3.7.1",
+    "@typescript-eslint/eslint-plugin": "4.0.0",
+    "@typescript-eslint/parser": "3.7.1",
     "eslint": "^7.32.0",
-    "typedoc": "^0.21.2",
-    "typedoc-plugin-markdown": "^3.10.4",
-    "typescript": "^4.0.8"
+    "typedoc": "^0.21.9",
+    "typedoc-plugin-markdown": "3.10.4",
+    "typescript": "^4.4"
   }
 }

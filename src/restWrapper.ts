@@ -104,16 +104,65 @@ class RestCallWrapper {
                 cookieJar.setCookie("DWFormatCulture=de", this.platformRoot);
                 //set jar to const http client config, so all following requests will get the cookie jar as well
                 this.docuWare_request_config.jar = cookieJar;
+                console.info("Logon successful")
                 resolve(logonResponse.body);
               } else {
+                console.warn("No cookies returned")
                 reject(new Error("No cookies returned!"));
               }
             } catch (error) {
+              console.warn("Error when handling logon response")
               reject(error);
             }
           }
         )
         .catch((err) => {
+          console.warn("Error when posting logon request")
+          reject(err);
+        });
+    });
+  }
+
+  Logoff(): Promise<DWRest.ILogoffResponse> {
+    return new Promise<DWRest.ILogoffResponse>((resolve, reject) => {
+      //set 'resolveWithFullResponse' to true otherwise you get the body instead of response object and we cannot get the cookies
+      // ... is the spread operator (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)
+      return request
+        .get("DocuWare/Platform/Account/Logoff", {
+          ...this.docuWare_request_config,
+          resolveWithFullResponse: true,
+        })
+        .promise()
+        .then(
+          (logoffResponse: DWRequestPromiseExtension.ILogoffResponseWrapper) => {
+            try {
+              //Take care of errors and throttling
+            //   const respondedCookies = logoffResponse.headers["set-cookie"];
+            //   if (respondedCookies && respondedCookies.length > 0) {
+                const cookieJar = request.jar();
+                // respondedCookies.forEach((cookieString) => {
+                //   //add cookies to jar
+                //   cookieJar.setCookie(cookieString, this.platformRoot);
+                // });
+                //Set the culture so our DocuWare Platform will respond with correct formats
+                cookieJar.setCookie("DWFormatCulture=de", this.platformRoot);
+                //set jar to const http client config, so all following requests will get the cookie jar as well
+                this.docuWare_request_config.jar = cookieJar;
+                console.info("Logoff successful")
+                // console.info(logoffResponse.body)
+                resolve(logoffResponse.body);
+            //   } else {
+            //     console.warn("No cookies returned")
+            //     reject(new Error("No cookies returned!"));
+            //   }
+            } catch (error) {
+              console.warn("Error when handling logoff response")
+              reject(error);
+            }
+          }
+        )
+        .catch((err) => {
+          console.warn("Error when posting logoff request")
           reject(err);
         });
     });
@@ -237,7 +286,7 @@ class RestCallWrapper {
    * @param {boolean}[fullLoad=false] fullLoad
    * @returns {Promise<DWRest.IDocument>}
    */
-  GetDocumentByDocID(
+   GetDocumentByDocID(
     fileCabinet: DWRest.IFileCabinet,
     docId: number,
     fullLoad = false
@@ -256,6 +305,73 @@ class RestCallWrapper {
           return Promise.resolve<DWRest.IDocument>(documentResponse);
         }
       });
+  }
+
+  /**
+   * Get all sections of a document
+   *
+   * @param {DWRest.IDocument} document
+   * @returns {Promise<DWRest.ISection[]>}
+   */
+   GetSections(
+    document: DWRest.IDocument
+  ): Promise<DWRest.ISection[]> {
+    const sectionsLink: string = this.GetLink(document, "sections");
+
+    return request
+      .get(`${sectionsLink}`, this.docuWare_request_config)
+      .promise()
+      .then((sectionsResponse: DWRest.ISection[]) => {
+        console.info(sectionsResponse)
+        return sectionsResponse;
+      });
+  }
+
+  /**
+   * Upload an additional file to a document
+   *
+   * @param {DWRest.IDocument} document
+   * @param {string} pathToFile
+   * @returns {Promise<DWRest.ISection>}
+   */
+   UploadFile(
+    document: DWRest.IDocument,
+    pathToFile: string
+  ): Promise<DWRest.ISection> {
+    const sectionsLink: string = this.GetLink(document, "sections");
+
+    const fileName: string = path.basename(pathToFile);
+    const contentType: string | false = mime.contentType(fileName);
+
+    // Get file modified date time
+    const stats = fs.statSync(pathToFile);
+    const mtime = stats.mtime;
+
+    const formData = {
+      file: {
+        value: fs.createReadStream(pathToFile),
+        options: {
+          contentType: contentType,
+          filename: fileName,
+        },
+      },
+    };
+
+    // Add X-File headers
+    // - X-File-ModifiedDate is the last modified date that is used for example in the viewer
+    const xFileHeaders = {
+      ...this.docuWare_request_config.headers,
+      "X-File-ModifiedDate": mtime.toISOString(),
+    };
+  
+    this.docuWare_request_config.headers = xFileHeaders;
+  
+    return request
+      .post(sectionsLink, {
+        ...this.docuWare_request_config,
+        formData: formData,
+      })
+      .promise();
   }
 
   /**
@@ -827,6 +943,7 @@ class RestCallWrapper {
         },
       },
     };
+    console.info('Starting put request');
     return request
       .put(sectionContentLink, {
         ...this.docuWare_request_config,
